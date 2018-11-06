@@ -47,6 +47,11 @@ DEFAULT_PERSONAL_INFO_MAP = {
         "value": 1,
         "validateFunction": None
     },
+    "experience": {
+        "type": int,
+        "value": 0,
+        "validateFunction": None
+    },
     "nickname": {
         "type": str,
         "value": None,
