@@ -194,7 +194,7 @@ class UserPersonalInfo(UserResource):
         data = {}
         for arg in arguments_put.args:
             value = request.args.get(arg.name)
-            if value is not None and arg.name in DEFAULT_AWARDS_MAP:
+            if value is not None and arg.name in DEFAULT_PERSONAL_INFO_MAP:
                 type_ = DEFAULT_PERSONAL_INFO_MAP[arg.name]["type"]
                 validate_func =\
                     DEFAULT_PERSONAL_INFO_MAP[arg.name]["validateFunction"]
