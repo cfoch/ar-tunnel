@@ -202,6 +202,8 @@ class UserPersonalInfo(UserResource):
                 if validate_func is not None:
                     validate_func(value)
                 data["PersonalInfo.%s" % arg.name] = value
+        if not data:
+            return
         self.users.update({"_id": ObjectId(id)},
                           {"$set": data})
 
@@ -257,6 +259,8 @@ class UserAwards(UserResource):
 
         increase = bool(arguments_user_awards_put.parse_args()["_increase"])
         op = "$set" if not increase else "$inc"
+        if not data:
+            return
         self.users.update({"_id": ObjectId(id)}, {op: data})
 
     @api.expect(arguments_get, validate=True)
