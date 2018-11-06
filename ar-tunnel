@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+import sys
+import argparse
+import configparser
+import ar_tunnel.models.user
+import ar_tunnel.models.artifact
+from ar_tunnel import app
+from ar_tunnel import mongo
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config-file",
+                        type=argparse.FileType('r', encoding='utf-8'),
+                        help="Path to the config file with features to use",
+                        required=True)
+    parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        required=False)
+
+    args = parser.parse_args()
+    config = configparser.ConfigParser()
+    config.read_file(args.config_file)
+
+    if "mongodb" in config.sections():
+        items = dict(config.items("mongodb"))
+        if "uri" in items:
+            app.config["MONGO_URI"] = items["uri"]
+            mongo.init_app(app)
+            app.run(debug=True)
+            sys.exit(0)
+    sys.exit(1)
