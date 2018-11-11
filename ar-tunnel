@@ -2,6 +2,7 @@
 import sys
 import argparse
 import configparser
+import ar_tunnel
 import ar_tunnel.models.user
 import ar_tunnel.models.artifact
 from ar_tunnel import app
@@ -28,5 +29,6 @@ if __name__ == "__main__":
             app.config["MONGO_URI"] = items["uri"]
             mongo.init_app(app)
             app.run(debug=True)
+            ar_tunnel.init_db(mongo)
             sys.exit(0)
     sys.exit(1)
