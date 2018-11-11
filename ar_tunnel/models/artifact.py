@@ -15,7 +15,7 @@ DEFAULT_PERSONAL_INFO_MAP = {
         # TODO?
         "validateFunction": None
     },
-    "path": {
+    "name": {
         "type": str,
         "value": True,
         "validateFunction": None
@@ -43,7 +43,7 @@ put_arguments = reqparse.RequestParser()
 put_arguments.add_argument('type',
                            choices=ARTIFACT_TYPES,
                            required=True)
-put_arguments.add_argument('path', type=str, required=False)
+put_arguments.add_argument('name', type=str, required=True)
 put_arguments.add_argument('latitude', type=float, required=True)
 put_arguments.add_argument('longitude', type=float, required=True)
 
