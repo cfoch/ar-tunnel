@@ -118,6 +118,10 @@ class UserResource(Resource):
         return mongo.db.users
 
     @property
+    def artifacts(self):
+        return mongo.db.artifacts
+
+    @property
     def users_artifacts(self):
         return mongo.db.users_artifacts
 
@@ -282,6 +286,9 @@ class UserAwards(UserResource):
 arguments_user_collected_items_get = reqparse.RequestParser()
 arguments_user_collected_items_get.add_argument("types", type=inputs.boolean,
                                                 required=False)
+arguments_user_collected_items_get.add_argument("_non_collected",
+                                                type=inputs.boolean,
+                                                required=False)
 
 arguments_user_collected_items_put = reqparse.RequestParser()
 arguments_user_collected_items_put.add_argument("artifact_id", type=str,
@@ -297,21 +304,53 @@ arguments_user_collected_items_put.add_argument("_increase",
 class UserCollectedItems(UserResource):
     @api.expect(arguments_user_collected_items_get, validate=True)
     def get(self, id):
-        """Gets the user's collected items."""
+        """
+        Gets the user's collected items showing its quantities.
+
+        If `types` is true, then items will be grouped by type. Otherwise,
+        items are listed per unit/item basis.
+
+        If `_non_collected` is true, then only the non-collected items will be
+        listed. It can be used in combination with `types`.
+
+        Note: The combination `types=true` and `_non_collected=true` is not
+        supported.
+        """
         ARChecks.User.ensure_existent_user(mongo.db.users, id)
 
         parser = arguments_user_collected_items_get.parse_args()
         types = parser["types"]
+        non_collected = parser["_non_collected"]
 
-        obj = {"_id": id, "CollectedItems": []}
-        if not types:
-            cursor = self._get_artifact_types(id)
+        if not non_collected:
+            obj = {"_id": id, "CollectedItems": []}
+            if not types:
+                cursor = self._get_artifact_types(id)
+            else:
+                cursor = self._count_by_artifact_type(id)
+            if cursor.alive:
+                obj = cursor.next()
+            return json.loads(JSONEncoder().encode(obj))
         else:
-            cursor = self._count_by_artifact_type(id)
+            obj = {"_id": id, "NonCollectedItems": []}
+            if types:
+                return {"message": "Not supported"}, 400
+            else:
+                # TODO
+                # Do this in just one query.
+                project = {"artifact_id": True}
+                cursor = self.users_artifacts.find({"user_id": ObjectId(id)},
+                                                   project)
+                user_artifacts_ids = list(cursor)
+                user_artifacts_ids =\
+                    [u["artifact_id"] for u in user_artifacts_ids]
 
-        if cursor.alive:
-            obj = cursor.next()
-        return json.loads(JSONEncoder().encode(obj))
+                project = {"_id": True}
+                cursor = self.artifacts.find(
+                    {"_id": {"$nin": user_artifacts_ids}}, project)
+                non_collected_ids = [u["_id"] for u in list(cursor)]
+                obj["NonCollectedItems"] = non_collected_ids
+                return json.loads(JSONEncoder().encode(obj))
 
 
     @api.expect(arguments_user_collected_items_put, validate=True)
