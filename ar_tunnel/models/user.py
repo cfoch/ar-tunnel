@@ -289,6 +289,9 @@ arguments_user_collected_items_get.add_argument("types", type=inputs.boolean,
 arguments_user_collected_items_get.add_argument("_non_collected",
                                                 type=inputs.boolean,
                                                 required=False)
+arguments_user_collected_items_get.add_argument("_full",
+                                                type=inputs.boolean,
+                                                required=False)
 
 arguments_user_collected_items_put = reqparse.RequestParser()
 arguments_user_collected_items_put.add_argument("artifact_id", type=str,
@@ -321,11 +324,12 @@ class UserCollectedItems(UserResource):
         parser = arguments_user_collected_items_get.parse_args()
         types = parser["types"]
         non_collected = parser["_non_collected"]
+        full = parser["_full"]
 
         if not non_collected:
             obj = {"_id": id, "CollectedItems": []}
             if not types:
-                cursor = self._get_artifact_types(id)
+                cursor = self._get_artifact_types(id, full)
             else:
                 cursor = self._count_by_artifact_type(id)
             if cursor.alive:
@@ -345,10 +349,16 @@ class UserCollectedItems(UserResource):
                 user_artifacts_ids =\
                     [u["artifact_id"] for u in user_artifacts_ids]
 
-                project = {"_id": True}
+                if not full:
+                    project = {"_id": True}
+                else:
+                    project = None
                 cursor = self.artifacts.find(
                     {"_id": {"$nin": user_artifacts_ids}}, project)
-                non_collected_ids = [u["_id"] for u in list(cursor)]
+
+                non_collected_ids = []
+                for u in list(cursor):
+                    non_collected_ids.append(u)
                 obj["NonCollectedItems"] = non_collected_ids
                 return json.loads(JSONEncoder().encode(obj))
 
@@ -375,7 +385,13 @@ class UserCollectedItems(UserResource):
                 upsert=True
             )
 
-    def _get_artifact_types(self, id):
+    def _get_artifact_types(self, id, full=False):
+        items_aggregator = {"_id": "$artifact_id", "value": "$value"}
+        if full:
+            items_aggregator["latitude"] = "$artifact.latitude"
+            items_aggregator["longitude"] = "$artifact.longitude"
+            items_aggregator["name"] = "$artifact.name"
+
         cursor = self.users_artifacts.aggregate([
             {"$match": {"user_id": ObjectId(id)}},
             {
@@ -389,7 +405,7 @@ class UserCollectedItems(UserResource):
             {"$unwind": "$artifact"},
             {
                 "$addFields": {
-                    "item": {"_id": "$artifact_id", "value": "$value"}
+                    "item": items_aggregator
                 }
             },
             {
