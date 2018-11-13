@@ -7,7 +7,7 @@ from flask_restplus import inputs
 from ar_tunnel import api
 from ar_tunnel import mongo
 
-ARTIFACT_TYPES = ["botella", "figurina", "olla", "jarron"]
+ARTIFACT_TYPES = ["botella", "figurina", "olla", "cantaro"]
 DEFAULT_PERSONAL_INFO_MAP = {
     "type": {
         "type": str,
