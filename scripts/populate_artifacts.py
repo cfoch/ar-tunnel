@@ -30,8 +30,8 @@ if __name__ == "__main__":
             continue
         type_ = row[0]
         name = row[1]
-        latitude = float(row[2].replace(".", ""))
-        longitude = float(row[3].replace(".", ""))
+        latitude = float(row[2])
+        longitude = float(row[3])
 
         data = {
             "type": type_,
