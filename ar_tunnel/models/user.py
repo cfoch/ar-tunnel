@@ -310,14 +310,18 @@ class UserCollectedItems(UserResource):
         """
         Gets the user's collected items showing its quantities.
 
-        If `types` is true, then items will be grouped by type. Otherwise,
-        items are listed per unit/item basis.
+        If <b>types</b> is <i>true</i>, then items will be grouped by type.
+        Otherwise, items are listed per unit/item basis. If <b>types</b> is
+        <i>false</i> and <b>full</b> is <i>true</i>, then the full
+        information of artifacts is retrieved.
+        <br>
 
-        If `_non_collected` is true, then only the non-collected items will be
-        listed. It can be used in combination with `types`.
+        If <b>_non_collected</b> is <i>true</i>, then only the non-collected
+        items will be listed. It can be used in combination with <b>types</b>.
+        <br>
 
-        Note: The combination `types=true` and `_non_collected=true` is not
-        supported.
+        Note: The combination <b></i>types=true</i></b> and
+        <b><i>_non_collected=true</i></b> is not supported.
         """
         ARChecks.User.ensure_existent_user(mongo.db.users, id)
 
