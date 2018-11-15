@@ -38,8 +38,8 @@ DEFAULT_PERSONAL_INFO_MAP = {
         "validateFunction": None
     },
     "isTutorialDone": {
-        "type": str,
-        "value": None,
+        "type": bool,
+        "value": False,
         "validateFunction": None
     },
     "level": {
