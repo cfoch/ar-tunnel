@@ -1,5 +1,7 @@
+import json
 from bson import ObjectId
 from flask import request
+from ar_tunnel.utils.misc import JSONEncoder
 from flask_restplus import Resource
 from flask_restplus import reqparse
 from flask_restplus import inputs
@@ -47,20 +49,42 @@ put_arguments.add_argument('name', type=str, required=True)
 put_arguments.add_argument('latitude', type=float, required=True)
 put_arguments.add_argument('longitude', type=float, required=True)
 
+get_arguments = reqparse.RequestParser()
+get_arguments.add_argument('group_by_type',
+                           type=inputs.boolean,
+                           required=False)
+get_arguments.add_argument('user', type=str, required=False)
 
 @api.route("/artifact/")
 class Artifacts(ArtifactResource):
+    @api.expect(get_arguments, validate=True)
     def get(self):
         """
         Gets all the artifacts.
         """
-        objs = self.artifacts.find()
-        ret = []
-        for obj in objs:
-            obj["_id"] = str(obj["_id"])
-            ret.append(obj)
-        print(ret)
-        return ret
+        fields = get_arguments.parse_args()
+        group_by_type = fields["group_by_type"]
+        user = fields["user"]
+
+        if user is None or group_by_type is None:
+            objs = self.artifacts.find()
+            ret = []
+            for obj in objs:
+                obj["_id"] = str(obj["_id"])
+                ret.append(obj)
+            return ret
+        elif group_by_type and user is not None:
+            cursor = self._group_by_type(user)
+            ret = {}
+            for item in cursor:
+                type_ = item["_id"]["type"]
+                ret[type_] = []
+                for artifact in item["artifacts"]:
+                    artifact["collected"] = len(artifact["items"]) == 1
+                    del artifact["items"]
+                    ret[type_].append(artifact)
+            return json.loads(JSONEncoder().encode(ret))
+        return {"message": "Not supported"}
 
     @api.expect(put_arguments, validate=True)
     def post(self):
@@ -71,6 +95,48 @@ class Artifacts(ArtifactResource):
         fields = put_arguments.parse_args()
         res = self.artifacts.insert_one(fields)
         return {"_id": str(res.inserted_id)}
+
+    def _group_by_type(self, user_id):
+        cursor = self.artifacts.aggregate([
+            {
+                "$lookup": {
+                    "from": "users_artifacts",
+                    "localField": "_id",
+                    "foreignField": "artifact_id",
+                    "as": "items"
+                },
+            },
+            {
+                "$project": {
+                    "items.user_id": 1,
+                    "type": 1,
+                    "name": 1,
+                    "latitude": 1,
+                    "longitude": 1
+                }
+            },
+            {
+                "$project": {
+                    "items": {
+                        "$filter": {
+                            "input": "$items",
+                            "as": "item",
+                            "cond": {
+                                "$eq": ["$$item.user_id", ObjectId(user_id)]
+                            }
+                        }
+                    },
+                    "type": 1, "name": 1, "latitude": 1, "longitude": 1
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"type": "$type" },
+                    "artifacts": { "$push": "$$ROOT"}
+                }
+            }
+        ])
+        return cursor
 
 
 arguments_get = reqparse.RequestParser()
