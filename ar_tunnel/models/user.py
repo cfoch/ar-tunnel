@@ -219,6 +219,7 @@ class UserPersonalInfo(UserResource):
         filter_ = {"PersonalInfo": True}
         fields = arguments_get.parse_args()["fields"]
         if fields is not None:
+            filter_ = {}
             for field in DEFAULT_PERSONAL_INFO_MAP:
                 if field in fields:
                     filter_["PersonalInfo.%s" % field] = True
@@ -275,6 +276,7 @@ class UserAwards(UserResource):
         filter_ = {"Awards": True}
         fields = arguments_get.parse_args()["fields"]
         if fields is not None:
+            filter_ = {}
             for field in DEFAULT_AWARDS_MAP:
                 if field in fields:
                     filter_["Awards.%s" % field] = True
