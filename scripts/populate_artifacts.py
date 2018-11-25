@@ -39,6 +39,13 @@ if __name__ == "__main__":
             "latitude": latitude,
             "longitude": longitude
         }
+
+        try:
+            description = row[4]
+            data["description"] = description
+        except KeyError:
+            pass
+
         try:
             id_ = db.artifacts.insert_one(data.copy())
             print(id_)
