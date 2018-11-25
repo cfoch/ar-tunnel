@@ -22,6 +22,11 @@ DEFAULT_PERSONAL_INFO_MAP = {
         "value": True,
         "validateFunction": None
     },
+    "description": {
+        "type": str,
+        "value": "",
+        "validateFunction": None
+    },
     "latitude": {
         "type": float,
         "value": True,
@@ -46,6 +51,7 @@ put_arguments.add_argument('type',
                            choices=ARTIFACT_TYPES,
                            required=True)
 put_arguments.add_argument('name', type=str, required=True)
+put_arguments.add_argument('description', type=str, required=False)
 put_arguments.add_argument('latitude', type=float, required=True)
 put_arguments.add_argument('longitude', type=float, required=True)
 
