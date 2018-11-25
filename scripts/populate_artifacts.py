@@ -49,5 +49,5 @@ if __name__ == "__main__":
                 del data["name"]
 
                 print(data)
-                db.artifacts.update_one({"name": name}, {"$set": data})
-    
+                res = db.artifacts.update_one({"name": name, "type": type_}, {"$set": data})
+                print("res: ", res.raw_result)
